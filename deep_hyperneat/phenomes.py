@@ -4,6 +4,8 @@ Contains classes for CPPN and Substrate phenomes.
 Largely copied from neat-python. (Copyright 2015-2017, CodeReclaimers, LLC.)
 '''
 
+import json
+
 from deep_hyperneat.util import itervalues
 import numpy as np
 
@@ -151,6 +153,77 @@ class FeedForwardCPPN():
         for key in genome.bias_keys:
             mapping_tuples[key] = genome.nodes[key].cppn_tuple
         return FeedForwardCPPN(genome.input_keys, genome.output_keys, node_evals, genome.nodes, mapping_tuples)
+
+    def save_to_json(self, filename):
+        """
+        Save the FeedForwardCPPN object to a JSON file.
+
+        :param filename: str, the name of the file to save the JSON data
+        """
+        data = {
+            "input_nodes": list(self.input_nodes),
+            "output_nodes": {str(k): v for k, v in self.output_nodes.items()},
+            "values": {str(k): float(v) for k, v in self.values.items()},
+            "node_evals": []
+        }
+
+        for node, act_func, agg_func, incoming_connections in self.node_evals:
+            node_data = {
+                "node": str(node),
+                "activation_function": act_func.__name__,
+                "aggregation_function": agg_func.__name__,
+                "incoming_connections": [(str(node_id), float(weight)) for node_id, weight in incoming_connections]
+            }
+            data["node_evals"].append(node_data)
+
+        if self.nodes:
+            data["nodes"] = {str(k): self._serialize_node(v) for k, v in self.nodes.items()}
+
+        with open(filename, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2)
+
+    def _serialize_node(self, node):
+        """Helper method to serialize node objects"""
+        node_data = {}
+        for key, value in vars(node).items():
+            if isinstance(value, (int, float, str, bool, type(None))):
+                node_data[key] = value
+            elif isinstance(value, (list, tuple)):
+                node_data[key] = [str(item) if not isinstance(item, (int, float, str, bool)) else item for item in value]
+            elif hasattr(value, '__dict__'):
+                node_data[key] = self._serialize_node(value)
+            else:
+                node_data[key] = str(value)
+        return node_data
+
+    @staticmethod
+    def load_from_json(filename):
+        """
+        Load a FeedForwardCPPN object from a JSON file.
+
+        :param filename: str, the name of the file to load the JSON data from
+        :return: FeedForwardCPPN object
+        """
+        with open(filename, 'r') as f:
+            data = json.load(f)
+
+        input_nodes = set(data["input_nodes"])
+        output_nodes = {eval(k): v for k, v in data["output_nodes"].items()}
+
+        node_evals = []
+        for node_data in data["node_evals"]:
+            node = eval(node_data["node"])
+            act_func = getattr(np, node_data["activation_function"])
+            agg_func = getattr(np, node_data["aggregation_function"])
+            incoming_connections = [(eval(node_id), weight) for node_id, weight in node_data["incoming_connections"]]
+            node_evals.append((node, act_func, agg_func, incoming_connections))
+
+        nodes = None
+        if "nodes" in data:
+            nodes = {eval(k): v for k, v in data["nodes"].items()}
+
+        return FeedForwardCPPN(input_nodes, output_nodes, node_evals, nodes)
+
 
 class FeedForwardSubstrate():
     def __init__(self, inputs, bias, outputs, node_evals):

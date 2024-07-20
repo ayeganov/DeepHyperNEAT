@@ -11,7 +11,7 @@ class Stagnation:
     def __init__(self, species_elitism=3):
         self.species_fitness_func = mean
         self.reporters = None
-        self.species_elitism = 0
+        self.species_elitism = species_elitism
         self.max_stagnation = 15
 
     def update(self, species_set, generation):
