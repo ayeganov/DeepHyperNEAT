@@ -40,7 +40,7 @@ def rectangle_proximity(genomes, data_loader):
                 # Flatten the image for substrate input
 #                compressed = pca(image, path).reshape(-1)
 #                compressed = np.append(compressed, 1.0)
-                inputs = image.view(-1).numpy()
+                inputs = image.view(-1).numpy().clip(0, 1)
                 inputs = np.append(inputs, 1.0)
 
                 # Generate rectangle center using the substrate

@@ -47,14 +47,14 @@ def report_output(pop, data_loader):
 #            compressed = pca(image, path).reshape(-1)
 #            compressed = np.append(compressed, 1.0)
 #            outputs = substrate.activate(compressed)
-            inputs = image.view(-1).numpy()
+            inputs = image.view(-1).numpy().clip(0, 1)
             inputs = np.append(inputs, 1.0)
             outputs = substrate.activate(inputs)
 #            predicted_center = (
 #                int(outputs[0] * image_width),
 #                int(outputs[1] * image_height)
 #            )
-            
+
             actual_center = (
                 label[0].item() + label[2].item() / 2,
                 label[1].item() + label[3].item() / 2

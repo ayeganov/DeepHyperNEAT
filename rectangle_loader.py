@@ -137,6 +137,9 @@ def main():
             ax2.imshow(reconstructed_image.squeeze(), cmap='gray')
             ax2.set_title('Reconstructed Image')
         else:
+            inputs = images[0].view(-1).numpy()
+            inputs = np.clip(inputs, 0, 1)
+            print(f"{inputs=}")
             ax2.imshow(images[0].squeeze().numpy(), cmap='gray')
             ax2.set_title('Original Image (No PCA)')
         ax2.axis('off')
