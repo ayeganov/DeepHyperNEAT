@@ -6,15 +6,16 @@ from deep_hyperneat.util import iteritems, itervalues, iterkeys
 from deep_hyperneat.phenomes import FeedForwardCPPN as CPPN
 from deep_hyperneat.decode import decode
 from rectangle_loader import PCATransform
+from rect_data_gen import save_grayscale_image
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
 # These should match your main script
-image_width, image_height = 40, 40
+image_width, image_height = 12, 12
 sub_in_dims = [1, image_height * image_width]
 sub_sh_dims = [1, 3]
-sub_o_dims = 2
+sub_o_dims = 144
 pca_comps = 5
 pca = PCATransform(pca_comps)
 
@@ -39,7 +40,7 @@ def report_output(pop, data_loader):
     
     # Use a small subset of the data for reporting
     sample_data = list(islice(data_loader, 1))
-    
+    idx = 0
     total_error = 0.0
     for images, labels, paths in sample_data:
         for image, label, path in zip(images, labels, paths):
@@ -49,17 +50,20 @@ def report_output(pop, data_loader):
             inputs = image.view(-1).numpy()
             inputs = np.append(inputs, 1.0)
             outputs = substrate.activate(inputs)
-            
-            predicted_center = (
-                int(outputs[0] * image_width),
-                int(outputs[1] * image_height)
-            )
+#            predicted_center = (
+#                int(outputs[0] * image_width),
+#                int(outputs[1] * image_height)
+#            )
             
             actual_center = (
                 label[0].item() + label[2].item() / 2,
                 label[1].item() + label[3].item() / 2
             )
-            
+            prediction = np.array(outputs).reshape(image_width, image_height)
+            save_grayscale_image(prediction, "/tmp", idx)
+            idx += 1
+            max_idx = np.argmax(outputs)
+            predicted_center = np.unravel_index(max_idx, (image_width, image_height))
             error = calculate_distance(predicted_center, actual_center)
             total_error += error
             print(f"Image: {path}")

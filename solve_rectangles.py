@@ -8,10 +8,10 @@ from rectangle_loader import get_rectangle_data_loader, PCATransform
 
 # Substrate parameters
 pca_comps = 5
-image_width, image_height = 40, 40
+image_width, image_height = 12, 12
 sub_in_dims = [1, image_height * image_width]  # 1 x flattened image
 sub_sh_dims = [1, 3]
-sub_o_dims = 2  # 2 outputs (x, y) for the center of the large rectangle
+sub_o_dims = 144  # 2 outputs (x, y) for the center of the large rectangle
 
 # Evolutionary parameters
 pop_key = 0
@@ -47,17 +47,18 @@ def rectangle_proximity(genomes, data_loader):
                 outputs = substrate.activate(inputs)
 
                 # Interpret outputs as the center of the large rectangle
-                predicted_center = (
-                    int(outputs[0] * image_width),
-                    int(outputs[1] * image_height)
-                )
+#                predicted_center = (
+#                    int(outputs[0] * image_width),
+#                    int(outputs[1] * image_height)
+#                )
 
+                max_idx = np.argmax(outputs)
                 # Extract the center of the main rectangle from the label
                 actual_center = (
                     label[0].item() + label[2].item() / 2,
                     label[1].item() + label[3].item() / 2
                 )
-
+                predicted_center = np.unravel_index(max_idx, (image_height, image_width))
                 # Calculate fitness based on the distance between predicted and actual centers
                 distance = calculate_distance(predicted_center, actual_center)
                 fitness = 1 - (distance / max_distance)  # Normalize to [0, 1]
